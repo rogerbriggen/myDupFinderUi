@@ -9,7 +9,7 @@ import {
   RowQuery,
   Source,
 } from '../models/report';
-import { ReportBackend } from './report-backend';
+import { OpenReportOptions, ReportBackend } from './report-backend';
 import { filterAndPage } from './row-filter';
 
 /**
@@ -21,10 +21,26 @@ export class MockReportBackend implements ReportBackend {
   private readonly reports = new Map<number, { jobName: string; rows: Row[] }>();
   private nextId = 0;
 
-  async openReport(_path: string): Promise<ReportHandle> {
+  async openReport(_path: string, options?: OpenReportOptions): Promise<ReportHandle> {
     const rows = MOCK_ROWS.slice();
     const id = ++this.nextId;
     this.reports.set(id, { jobName: 'Mock report', rows });
+    // Mirror the Tauri backend's progress contract so consumers can develop
+    // against the mock: one parsing tick, then a done tick.
+    if (options?.onProgress) {
+      options.onProgress({
+        phase: 'parsing',
+        rowsRead: rows.length,
+        bytesRead: rows.length * 128,
+        totalBytes: rows.length * 128,
+      });
+      options.onProgress({
+        phase: 'done',
+        rowsRead: rows.length,
+        bytesRead: 0,
+        totalBytes: null,
+      });
+    }
     return {
       id,
       rowCount: rows.length,
