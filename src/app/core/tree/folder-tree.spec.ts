@@ -22,10 +22,7 @@ function r(
 
 describe('splitFolderAndName', () => {
   it('splits Windows path', () => {
-    expect(splitFolderAndName('C:\\a\\b\\foo.txt')).toEqual([
-      'C:\\a\\b',
-      'foo.txt',
-    ]);
+    expect(splitFolderAndName('C:\\a\\b\\foo.txt')).toEqual(['C:\\a\\b', 'foo.txt']);
   });
   it('splits POSIX path', () => {
     expect(splitFolderAndName('/a/b/foo.txt')).toEqual(['/a/b', 'foo.txt']);

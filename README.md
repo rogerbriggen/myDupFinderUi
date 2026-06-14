@@ -203,7 +203,7 @@ sprint.
   comfortable.
 - **Push filtering to Rust for large reports** — AGENTS §4.4 calls for a
   > 50 k-row threshold beyond which filters run on the backend with paged
-  fetches. Today all filtering is in-memory on the JS side.
+  > fetches. Today all filtering is in-memory on the JS side.
 - **Group-id row grouping with expand/collapse** — sibling rows that share
   a `GroupId` (Duplicate / Moved / Changed pairs) are shown flat. The
   spec wants them visually grouped and collapsible.

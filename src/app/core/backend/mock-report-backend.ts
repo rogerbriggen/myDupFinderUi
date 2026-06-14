@@ -41,9 +41,7 @@ export class MockReportBackend implements ReportBackend {
     return filterAndPage(r.rows, query);
   }
 
-  async findIdenticalFolders(
-    handle: ReportHandle,
-  ): Promise<IdenticalFolderPair[]> {
+  async findIdenticalFolders(handle: ReportHandle): Promise<IdenticalFolderPair[]> {
     if (!this.reports.has(handle.id)) {
       throw new Error(`Unknown handle ${handle.id}`);
     }

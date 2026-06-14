@@ -2,12 +2,7 @@ import { Injectable } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 
-import {
-  IdenticalFolderPair,
-  ReportHandle,
-  RowPage,
-  RowQuery,
-} from '../models/report';
+import { IdenticalFolderPair, ReportHandle, RowPage, RowQuery } from '../models/report';
 import { ReportBackend } from './report-backend';
 
 @Injectable({ providedIn: 'root' })
@@ -37,9 +32,7 @@ export class TauriReportBackend implements ReportBackend {
     const result = await open({
       multiple: false,
       directory: false,
-      filters: [
-        { name: 'Dup report CSV', extensions: ['csv'] },
-      ],
+      filters: [{ name: 'Dup report CSV', extensions: ['csv'] }],
     });
     if (typeof result === 'string') {
       return result;

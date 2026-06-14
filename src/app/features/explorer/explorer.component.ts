@@ -33,8 +33,8 @@ import { ToolbarComponent } from './toolbar.component';
         <div class="right">
           @if (!store.handle()) {
             <div class="placeholder">
-              No report open. Click <strong>Open report…</strong> in the
-              toolbar above to load a <code>dupReport.csv</code>.
+              No report open. Click <strong>Open report…</strong> in the toolbar above to load a
+              <code>dupReport.csv</code>.
             </div>
           } @else {
             <app-row-table />

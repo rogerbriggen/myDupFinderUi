@@ -1,10 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import {
-  IdenticalFolderPair,
-  ReportHandle,
-  RowPage,
-  RowQuery,
-} from '../models/report';
+import { IdenticalFolderPair, ReportHandle, RowPage, RowQuery } from '../models/report';
 
 /**
  * Backend abstraction layer. The UI talks to ReportBackend only; Tauri is one
