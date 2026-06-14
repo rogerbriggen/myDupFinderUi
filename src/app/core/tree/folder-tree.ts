@@ -1,4 +1,4 @@
-import { ALL_CATEGORIES, Category, Row } from '../models/report';
+import { ALL_CATEGORIES, Category, IdenticalFolderPair, Row } from '../models/report';
 
 export interface FolderNode {
   /** Full path of this folder, e.g. `C:\demo\photos`. Empty for the synthetic root. */
@@ -150,4 +150,70 @@ function isSeparatorAt(s: string, i: number): boolean {
   if (i >= s.length) return false;
   const ch = s.charCodeAt(i);
   return ch === 92 || ch === 47;
+}
+
+/**
+ * Per-folder hint derived from the identical-folder scan:
+ * - `green`  — this folder is itself part of an identical-folder pair, so its
+ *   whole subtree is fully duplicated somewhere else.
+ * - `yellow` — not green itself, but at least one descendant is green or yellow.
+ * - `red`    — no descendant (and not itself) has an identical match.
+ */
+export type IdenticalStatus = 'green' | 'yellow' | 'red';
+
+/**
+ * Build a `path -> IdenticalStatus` map for every folder in `root`. Returns an
+ * empty map when `pairs` is empty so callers can use that as a "no scan yet"
+ * signal and skip rendering colors.
+ */
+export function computeIdenticalStatuses(
+  root: FolderNode,
+  pairs: readonly IdenticalFolderPair[],
+): Map<string, IdenticalStatus> {
+  const out = new Map<string, IdenticalStatus>();
+  if (pairs.length === 0) return out;
+
+  const identicalPaths = new Set<string>();
+  for (const p of pairs) {
+    identicalPaths.add(p.folderA);
+    identicalPaths.add(p.folderB);
+  }
+
+  walk(root);
+  return out;
+
+  function walk(node: FolderNode): IdenticalStatus {
+    if (identicalPaths.has(node.path)) {
+      paintGreen(node);
+      return 'green';
+    }
+    if (node.children.length === 0) {
+      out.set(node.path, 'red');
+      return 'red';
+    }
+    let hasGreen = false;
+    let hasRed = false;
+    let hasYellow = false;
+    for (const child of node.children) {
+      const s = walk(child);
+      if (s === 'green') hasGreen = true;
+      else if (s === 'yellow') hasYellow = true;
+      else hasRed = true;
+    }
+    // Direct files in this folder have no identical-folder match of their own,
+    // so they count like a red child: they can downgrade an all-green parent
+    // to yellow, but they don't add green/yellow signal.
+    if (node.directFileCount > 0) hasRed = true;
+    let status: IdenticalStatus;
+    if (hasYellow || (hasGreen && hasRed)) status = 'yellow';
+    else if (hasGreen) status = 'green';
+    else status = 'red';
+    out.set(node.path, status);
+    return status;
+  }
+
+  function paintGreen(node: FolderNode): void {
+    out.set(node.path, 'green');
+    for (const c of node.children) paintGreen(c);
+  }
 }
