@@ -251,7 +251,10 @@ export class ExplorerComponent {
       const next = Math.max(160, Math.min(window.innerWidth - 200, event.clientX));
       this.sidebarWidth.set(next);
     } else {
-      const next = Math.max(80, Math.min(window.innerHeight - 160, window.innerHeight - event.clientY));
+      const next = Math.max(
+        80,
+        Math.min(window.innerHeight - 160, window.innerHeight - event.clientY),
+      );
       this.identicalHeight.set(next);
     }
   }

@@ -246,6 +246,11 @@ threshold filter in-memory.
   (file open, backend events).
 - Strict TypeScript: `"strict": true`, `"noUncheckedIndexedAccess": true`.
 - Prettier + ESLint with `@angular-eslint`. CI must run both.
+- **Always run Prettier on every file you touch before finishing a change.**
+  CI runs `pnpm format:check` and will fail the build on any unformatted
+  file, so run `pnpm format` (or `pnpm exec prettier --write <files>`)
+  locally before committing. Don't rely on an editor-on-save hook — verify
+  with `pnpm format:check` before pushing.
 - Path alias `@app/*` → `src/app/*`. No deep relative imports across
   feature boundaries.
 - Folder layout:

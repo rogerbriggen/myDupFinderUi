@@ -162,9 +162,9 @@ runs in three stages:
 
    | Platform | Pull requests | Push to `main` / `workflow_dispatch` | Tag push (`v*`) |
    | -------- | :-----------: | :----------------------------------: | :-------------: |
-   | Linux    | ✅            | ✅                                   | ✅              |
-   | Windows  | ❌            | ✅                                   | ✅              |
-   | macOS    | ❌            | ❌                                   | ✅              |
+   | Linux    |      ✅       |                  ✅                  |       ✅        |
+   | Windows  |      ❌       |                  ✅                  |       ✅        |
+   | macOS    |      ❌       |                  ❌                  |       ✅        |
 
 3. **Release** — on `v*` tag pushes, all three platform bundles are zipped and
    attached to a GitHub Release via `softprops/action-gh-release`.
