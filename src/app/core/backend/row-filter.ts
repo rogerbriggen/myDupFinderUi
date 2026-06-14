@@ -37,10 +37,13 @@ export function filterAndPage(rows: readonly Row[], query: RowQuery): RowPage {
         return false;
       }
     }
-    if (cats && cats.length > 0 && !cats.includes(r.category)) {
+    // Empty array means "user deselected every chip" → match nothing
+    // (matches the Rust backend's `Some(vec![])` semantics). `undefined`
+    // means "no filter".
+    if (cats !== undefined && !cats.includes(r.category)) {
       return false;
     }
-    if (srcs && srcs.length > 0 && !srcs.includes(r.source)) {
+    if (srcs !== undefined && !srcs.includes(r.source)) {
       return false;
     }
     return true;

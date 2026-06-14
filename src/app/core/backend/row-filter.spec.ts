@@ -70,4 +70,19 @@ describe('filterAndPage', () => {
     const out = filterAndPage(ROWS, { sources: ['Second'], limit: 100 });
     expect(out.total).toBe(1);
   });
+
+  it('empty category array matches nothing', () => {
+    const out = filterAndPage(ROWS, { categories: [], limit: 100 });
+    expect(out.total).toBe(0);
+  });
+
+  it('empty source array matches nothing', () => {
+    const out = filterAndPage(ROWS, { sources: [], limit: 100 });
+    expect(out.total).toBe(0);
+  });
+
+  it('undefined category leaves rows alone', () => {
+    const out = filterAndPage(ROWS, { limit: 100 });
+    expect(out.total).toBe(ROWS.length);
+  });
 });

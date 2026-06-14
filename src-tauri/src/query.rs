@@ -174,6 +174,30 @@ mod tests {
     }
 
     #[test]
+    fn empty_category_list_matches_nothing() {
+        let rows = sample();
+        let q = RowQuery {
+            categories: Some(vec![]),
+            limit: 100,
+            ..Default::default()
+        };
+        let page = list_rows(&rows, &q);
+        assert_eq!(page.total, 0);
+    }
+
+    #[test]
+    fn empty_source_list_matches_nothing() {
+        let rows = sample();
+        let q = RowQuery {
+            sources: Some(vec![]),
+            limit: 100,
+            ..Default::default()
+        };
+        let page = list_rows(&rows, &q);
+        assert_eq!(page.total, 0);
+    }
+
+    #[test]
     fn pagination() {
         let rows = sample();
         let q = RowQuery {

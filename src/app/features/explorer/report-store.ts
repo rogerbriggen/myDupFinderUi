@@ -61,6 +61,9 @@ export class ReportStore {
       this.rows.set(page.rows);
       this.tree.set(buildFolderTree(page.rows));
       this.selectedFolder.set('');
+      // Reset source filter so the chips that are about to be hidden can't
+      // silently exclude every row of the new report.
+      this.sourceFilter.set(defaultSourceFilter(handle.hasSecondSource));
       this.refreshFilter();
     } catch (e) {
       this.errorMessage.set(humanizeError(e));
@@ -168,6 +171,19 @@ export class ReportStore {
   }
 }
 
+/**
+ * Default source filter for a freshly opened report.
+ *
+ * The source chips are only rendered when `hasSecondSource` is true. If a
+ * user unchecks `Base` in a two-source report and then opens a single-DB
+ * (Base-only) report, a stale `['Second']` filter would hide every row and
+ * the chips wouldn't be visible to restore it. Resetting on open prevents
+ * that dead-end.
+ */
+export function defaultSourceFilter(hasSecondSource: boolean): Source[] {
+  return hasSecondSource ? ['Base', 'Second'] : ['Base'];
+}
+
 function applyFilter(rows: readonly Row[], query: RowQuery): Row[] {
   const folder = query.folder?.length ? query.folder : undefined;
   const includeDescendants = query.includeDescendants ?? false;
@@ -195,8 +211,11 @@ function applyFilter(rows: readonly Row[], query: RowQuery): Row[] {
         return false;
       }
     }
-    if (cats && cats.length > 0 && !cats.includes(r.category)) return false;
-    if (srcs && srcs.length > 0 && !srcs.includes(r.source)) return false;
+    // Empty array means "user deselected every chip" → match nothing
+    // (matches the Rust backend's `Some(vec![])` semantics). `undefined`
+    // means "no filter".
+    if (cats !== undefined && !cats.includes(r.category)) return false;
+    if (srcs !== undefined && !srcs.includes(r.source)) return false;
     return true;
   });
 }
