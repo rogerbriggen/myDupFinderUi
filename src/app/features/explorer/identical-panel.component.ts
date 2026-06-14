@@ -32,9 +32,14 @@ import { ReportStore } from './report-store';
           @for (p of pairs(); track p.folderA + '→' + p.folderB) {
             <tr>
               <td>
-                <a (click)="select(p.folderA)" [title]="p.folderA">
+                <button
+                  type="button"
+                  class="link"
+                  (click)="select(p.folderA)"
+                  [title]="p.folderA"
+                >
                   {{ p.folderA }}
-                </a>
+                </button>
               </td>
               <td [title]="p.folderB">{{ p.folderB }}</td>
               <td class="num">{{ p.fileCount }}</td>
@@ -71,10 +76,15 @@ import { ReportStore } from './report-store';
         text-align: right;
         font-variant-numeric: tabular-nums;
       }
-      a {
+      button.link {
         color: #1565c0;
         cursor: pointer;
         text-decoration: underline;
+        background: none;
+        border: none;
+        padding: 0;
+        font: inherit;
+        text-align: left;
       }
       .empty {
         color: #666;
