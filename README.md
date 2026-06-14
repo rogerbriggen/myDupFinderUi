@@ -207,6 +207,9 @@ cd src-tauri && cargo fmt --all -- --check && cargo clippy --all-targets -- -D w
 - **Identical-folder detector (Rust)** — bottom-up algorithm with
   memoization and maximal-pair pruning. Results sorted by total size,
   rendered in a side panel, clickable to jump to a folder.
+- **Identical-status badges in the folder tree** — each tree node carries
+  a green / yellow / no-badge indicator (full subtree match / partial
+  descendant match / none), with a tooltip describing what was matched.
 - **Tauri commands**: `open_report`, `list_report_rows`,
   `find_identical_folders_cmd`, `close_report`. Errors returned as tagged
   serde enums.
@@ -230,9 +233,6 @@ sprint.
 - **Group-id row grouping with expand/collapse** — sibling rows that share
   a `GroupId` (Duplicate / Moved / Changed pairs) are shown flat. The
   spec wants them visually grouped and collapsible.
-- **Identical-pair badges in the tree** — pairs are listed in a side
-  panel; folder-tree nodes don't yet get the "identical to: …" chip
-  described in AGENTS §4.3.
 - **Persistence** — last-opened report path and UI prefs (column toggles,
   filters) are not saved between sessions. AGENTS sprint backlog item 8.
 - **Async progress events** — backend commands run synchronously. AGENTS
@@ -248,6 +248,3 @@ sprint.
   and rejected with an "unsupported" error rather than parsed.
 - **Component-level tests** — only pure-TS modules are covered by
   Vitest. Component / harness tests are deferred.
-- **Lint / format gates in CI** — Prettier + `@angular-eslint` and
-  `cargo clippy -D warnings` are not wired into a `package.json` script
-  or workflow yet.
