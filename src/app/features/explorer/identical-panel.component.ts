@@ -30,12 +30,12 @@ import { ReportStore } from './report-store';
         <tbody>
           @for (p of pairs(); track p.folderA + '→' + p.folderB) {
             <tr>
-              <td>
+              <td class="path">
                 <button type="button" class="link" (click)="select(p.folderA)" [title]="p.folderA">
                   {{ p.folderA }}
                 </button>
               </td>
-              <td [title]="p.folderB">{{ p.folderB }}</td>
+              <td class="path" [title]="p.folderB">{{ p.folderB }}</td>
               <td class="num">{{ p.fileCount }}</td>
               <td class="num">{{ formatSize(p.totalSize) }}</td>
             </tr>
@@ -63,7 +63,10 @@ import { ReportStore } from './report-store';
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 360px;
+      }
+      td.path {
+        word-break: break-all;
+        white-space: normal;
       }
       th.num,
       td.num {

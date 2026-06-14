@@ -145,15 +145,38 @@ For a production release:
    keys, etc.
 4. Distribute the installer; users do not need Rust or Node to run it.
 
-### CI smoke test
+### CI
 
-The minimum CI matrix should run:
+The GitHub Actions workflow in [`.github/workflows/build.yml`](.github/workflows/build.yml)
+runs in three stages:
+
+1. **Test** (`pnpm install --frozen-lockfile`, format check, lint, Angular build,
+   Vitest, `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`) — gated
+   per platform.
+2. **Package** (`pnpm tauri build` + artifact upload) — each platform's package
+   job depends on its matching test job, so it only runs when that test job ran
+   and succeeded.
+
+   Both stages use the same per-platform gating, to match where the bundles are
+   actually consumed:
+
+   | Platform | Pull requests | Push to `main` / `workflow_dispatch` | Tag push (`v*`) |
+   | -------- | :-----------: | :----------------------------------: | :-------------: |
+   | Linux    |      ✅       |                  ✅                  |       ✅        |
+   | Windows  |      ❌       |                  ✅                  |       ✅        |
+   | macOS    |      ❌       |                  ❌                  |       ✅        |
+
+3. **Release** — on `v*` tag pushes, all three platform bundles are zipped and
+   attached to a GitHub Release via `softprops/action-gh-release`.
+
+To reproduce the test stage locally:
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm format:check && pnpm lint
 pnpm test
 pnpm build
-cd src-tauri && cargo test --lib && cargo clippy -- -D warnings
+cd src-tauri && cargo fmt --all -- --check && cargo clippy --all-targets -- -D warnings && cargo test --all-features
 ```
 
 ---
