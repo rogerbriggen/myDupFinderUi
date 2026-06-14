@@ -139,7 +139,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p staging
-          shopt -s nullglob globstar
+          shopt -s nullglob
           for f in ${{ matrix.bundle_glob }}; do
             cp -R "$f" staging/
           done
