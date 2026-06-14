@@ -1,4 +1,14 @@
-import { Component, computed, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { Row } from '../../core/models/report';
@@ -18,6 +28,9 @@ interface DisplayRow {
   groupId: number;
 }
 
+const ROW_HEIGHT = 22;
+const OVERSCAN = 10;
+
 @Component({
   selector: 'app-row-table',
   standalone: true,
@@ -34,37 +47,35 @@ interface DisplayRow {
         </span>
       }
     </div>
-    <div class="scroll">
-      <table>
-        <thead>
-          <tr>
-            <th class="folder">Folder</th>
-            <th class="filename">Filename</th>
-            <th class="size">Size</th>
-            <th class="category">Category</th>
-            @if (showHash()) {
-              <th class="hash">Hash</th>
-            }
-            <th class="source">Source</th>
-            <th class="group">Group</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of display(); track $index) {
-            <tr [class]="'cat-' + row.category">
-              <td class="folder" [title]="row.folder">{{ row.folder }}</td>
-              <td class="filename">{{ row.filename }}</td>
-              <td class="size" [title]="row.rawSize + ' B'">{{ row.size }}</td>
-              <td class="category">{{ row.category }}</td>
+    <div class="viewport" #viewport (scroll)="onScroll()">
+      <div class="header" [style.grid-template-columns]="cols()">
+        <div class="hcell">Folder</div>
+        <div class="hcell">Filename</div>
+        <div class="hcell">Size</div>
+        <div class="hcell">Category</div>
+        @if (showHash()) {
+          <div class="hcell">Hash</div>
+        }
+        <div class="hcell">Source</div>
+        <div class="hcell">Group</div>
+      </div>
+      <div class="canvas" [style.height.px]="canvasHeight()">
+        <div class="rows" [style.transform]="translate()">
+          @for (row of visible(); track $index) {
+            <div class="row" [class]="'cat-' + row.category" [style.grid-template-columns]="cols()">
+              <div class="cell folder" [title]="row.folder">{{ row.folder }}</div>
+              <div class="cell filename">{{ row.filename }}</div>
+              <div class="cell size" [title]="row.rawSize + ' B'">{{ row.size }}</div>
+              <div class="cell category">{{ row.category }}</div>
               @if (showHash()) {
-                <td class="hash" [title]="row.hashFull">{{ row.hashShort }}</td>
+                <div class="cell hash" [title]="row.hashFull">{{ row.hashShort }}</div>
               }
-              <td class="source">{{ row.source }}</td>
-              <td class="group">{{ row.groupId }}</td>
-            </tr>
+              <div class="cell source">{{ row.source }}</div>
+              <div class="cell group">{{ row.groupId }}</div>
+            </div>
           }
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   `,
   styles: [
@@ -86,67 +97,109 @@ interface DisplayRow {
         padding: 1px 4px;
         border-radius: 3px;
       }
-      .scroll {
+      .viewport {
         flex: 1;
         overflow: auto;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
+        position: relative;
         font-size: 12px;
         font-variant-numeric: tabular-nums;
       }
-      th,
-      td {
-        text-align: left;
-        padding: 2px 8px;
-        border-bottom: 1px solid #eee;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 320px;
-      }
-      thead th {
+      .header {
         position: sticky;
         top: 0;
+        z-index: 1;
+        display: grid;
         background: #fafafa;
         border-bottom: 1px solid #ccc;
         font-weight: 600;
       }
-      tr.cat-Duplicate td.category {
+      .hcell {
+        padding: 2px 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .canvas {
+        position: relative;
+      }
+      .rows {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        will-change: transform;
+      }
+      .row {
+        display: grid;
+        box-sizing: border-box;
+        height: ${ROW_HEIGHT}px;
+        line-height: ${ROW_HEIGHT - 4}px;
+        border-bottom: 1px solid #eee;
+      }
+      .cell {
+        padding: 2px 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .row.cat-Duplicate .cell.category {
         color: #1565c0;
       }
-      tr.cat-Moved td.category {
+      .row.cat-Moved .cell.category {
         color: #6a1b9a;
       }
-      tr.cat-Unique td.category {
+      .row.cat-Unique .cell.category {
         color: #2e7d32;
       }
-      tr.cat-Missing td.category {
+      .row.cat-Missing .cell.category {
         color: #c62828;
       }
-      tr.cat-New td.category {
+      .row.cat-New .cell.category {
         color: #ef6c00;
       }
-      tr.cat-Changed td.category {
+      .row.cat-Changed .cell.category {
         color: #ad1457;
       }
     `,
   ],
 })
-export class RowTableComponent {
+export class RowTableComponent implements AfterViewInit, OnDestroy {
   readonly store = inject(ReportStore);
 
   readonly rows = this.store.filteredRows;
   readonly showHash = this.store.showHash;
 
-  /** v1: cap render at 5000 rows to stay responsive without virtual-scroll. */
-  readonly display = computed<DisplayRow[]>(() => {
+  private readonly viewportRef = viewChild<ElementRef<HTMLDivElement>>('viewport');
+
+  readonly scrollTop = signal(0);
+  readonly viewportHeight = signal(600);
+
+  private resizeObserver?: ResizeObserver;
+
+  readonly canvasHeight = computed(() => this.rows().length * ROW_HEIGHT);
+
+  readonly range = computed<{ start: number; end: number }>(() => {
+    const total = this.rows().length;
+    if (total === 0) return { start: 0, end: 0 };
+    const visibleCount = Math.ceil(this.viewportHeight() / ROW_HEIGHT);
+    // Clamp start to [0, total - 1] — when the filter shrinks the row set,
+    // scrollTop() can still reflect the old (larger) offset until the browser
+    // re-fires a scroll event, which would otherwise put start past total and
+    // make `new Array(end - start)` blow up with a negative length.
+    const rawStart = Math.floor(this.scrollTop() / ROW_HEIGHT) - OVERSCAN;
+    const start = Math.min(Math.max(0, rawStart), total - 1);
+    const end = Math.min(total, start + visibleCount + OVERSCAN * 2);
+    return { start, end };
+  });
+
+  readonly visible = computed<DisplayRow[]>(() => {
+    const { start, end } = this.range();
     const rows = this.rows();
-    const sliced = rows.length > 5000 ? rows.slice(0, 5000) : rows;
-    return sliced.map((r) => {
+    const out: DisplayRow[] = new Array(end - start);
+    for (let i = start; i < end; i++) {
+      const r = rows[i];
       const [folder, filename] = splitFolderAndName(r.filenameAndPath);
-      return {
+      out[i - start] = {
         folder,
         filename,
         size: formatSize(r.fileSize),
@@ -157,6 +210,43 @@ export class RowTableComponent {
         source: r.source,
         groupId: r.groupId,
       };
-    });
+    }
+    return out;
   });
+
+  readonly translate = computed(() => `translateY(${this.range().start * ROW_HEIGHT}px)`);
+
+  readonly cols = computed(() => {
+    return this.showHash()
+      ? 'minmax(160px, 2fr) minmax(140px, 1fr) 90px 100px 130px 80px 70px'
+      : 'minmax(160px, 2fr) minmax(140px, 1fr) 90px 100px 80px 70px';
+  });
+
+  ngAfterViewInit(): void {
+    const el = this.viewportRef()?.nativeElement;
+    if (!el) return;
+    this.viewportHeight.set(el.clientHeight);
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.viewportHeight.set(el.clientHeight);
+      });
+      this.resizeObserver.observe(el);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+  }
+
+  onScroll(): void {
+    const el = this.viewportRef()?.nativeElement;
+    if (!el) return;
+    this.scrollTop.set(el.scrollTop);
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    const el = this.viewportRef()?.nativeElement;
+    if (el) this.viewportHeight.set(el.clientHeight);
+  }
 }
