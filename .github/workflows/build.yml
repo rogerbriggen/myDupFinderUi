@@ -58,6 +58,9 @@ jobs:
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Angular lint
+        run: pnpm lint
+
       - name: Angular build
         run: pnpm build
 

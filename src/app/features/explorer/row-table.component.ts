@@ -24,10 +24,12 @@ interface DisplayRow {
   imports: [CommonModule],
   template: `
     <div class="meta">
-      Showing {{ rows().length }} row<span *ngIf="rows().length !== 1">s</span>
-      <span *ngIf="store.selectedFolder() as f">
-        — folder: <code>{{ f || '(root)' }}</code>
-      </span>
+      Showing {{ rows().length }} row@if (rows().length !== 1) {<span>s</span>}
+      @if (store.selectedFolder(); as f) {
+        <span>
+          — folder: <code>{{ f || '(root)' }}</code>
+        </span>
+      }
     </div>
     <div class="scroll">
       <table>

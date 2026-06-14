@@ -23,9 +23,14 @@ interface FlattenedNode {
         @for (item of flattened(); track item.node.path) {
           <li
             class="row"
+            role="treeitem"
+            tabindex="0"
+            [attr.aria-selected]="item.node.path === selected()"
             [class.selected]="item.node.path === selected()"
             [style.paddingLeft.px]="8 + item.depth * 14"
             (click)="select(item.node.path)"
+            (keydown.enter)="select(item.node.path)"
+            (keydown.space)="select(item.node.path); $event.preventDefault()"
           >
             <button
               class="toggle"
