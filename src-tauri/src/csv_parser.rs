@@ -6,8 +6,7 @@ use csv::ReaderBuilder;
 use crate::error::{AppError, AppResult};
 use crate::model::{Category, Row, Source};
 
-pub const EXPECTED_HEADER: &str =
-    "FilenameAndPath;FileSize;FileSha512Hash;Category;Source;GroupId";
+pub const EXPECTED_HEADER: &str = "FilenameAndPath;FileSize;FileSha512Hash;Category;Source;GroupId";
 
 pub const CHECK_REPORT_MARKER: &str = "# myDupFinder check report";
 
@@ -52,10 +51,7 @@ pub fn parse_dup_report_from_reader<R: Read>(reader: R) -> AppResult<Vec<Row>> {
         .from_reader(reader);
 
     let headers = rdr.headers()?.clone();
-    let actual_header = headers
-        .iter()
-        .collect::<Vec<_>>()
-        .join(";");
+    let actual_header = headers.iter().collect::<Vec<_>>().join(";");
     if actual_header != EXPECTED_HEADER {
         return Err(AppError::InvalidReport(format!(
             "Unexpected CSV header: '{}'",
@@ -79,7 +75,11 @@ pub fn parse_dup_report_from_reader<R: Read>(reader: R) -> AppResult<Vec<Row>> {
         })?;
         let file_sha512_hash = rec[2].to_string();
         let category = Category::parse(&rec[3]).ok_or_else(|| {
-            AppError::InvalidReport(format!("Row {}: unknown Category '{}'", line_no + 2, &rec[3]))
+            AppError::InvalidReport(format!(
+                "Row {}: unknown Category '{}'",
+                line_no + 2,
+                &rec[3]
+            ))
         })?;
         let source = Source::parse(&rec[4]).ok_or_else(|| {
             AppError::InvalidReport(format!("Row {}: unknown Source '{}'", line_no + 2, &rec[4]))
@@ -102,10 +102,7 @@ pub fn parse_dup_report_from_reader<R: Read>(reader: R) -> AppResult<Vec<Row>> {
 
 /// Extract `<JobName>` from `"<JobName> dupReport.csv"`.
 pub fn job_name_from_path(path: &Path) -> String {
-    let stem = path
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("");
+    let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
     stem.strip_suffix(" dupReport").unwrap_or(stem).to_string()
 }
 
@@ -114,11 +111,13 @@ mod tests {
     use super::*;
     use std::io::Cursor;
 
-    const SAMPLE_ONLY_DUPS: &str = "FilenameAndPath;FileSize;FileSha512Hash;Category;Source;GroupId\r\n\
+    const SAMPLE_ONLY_DUPS: &str =
+        "FilenameAndPath;FileSize;FileSha512Hash;Category;Source;GroupId\r\n\
 \"C:\\a\\b\\one.txt\";123;ABCDEF;Duplicate;Base;1\r\n\
 \"C:\\a\\b\\two.txt\";456;FEDCBA;Duplicate;Base;2\r\n";
 
-    const SAMPLE_WHOLE_LOT: &str = "FilenameAndPath;FileSize;FileSha512Hash;Category;Source;GroupId\r\n\
+    const SAMPLE_WHOLE_LOT: &str =
+        "FilenameAndPath;FileSize;FileSha512Hash;Category;Source;GroupId\r\n\
 \"C:\\a\\b\\one.txt\";123;ABCDEF;Duplicate;Base;1\r\n\
 \"C:\\x\\y\\one.txt\";123;ABCDEF;Duplicate;Second;1\r\n\
 \"C:\\a\\b\\miss.txt\";10;HASH1;Missing;Base;2\r\n\

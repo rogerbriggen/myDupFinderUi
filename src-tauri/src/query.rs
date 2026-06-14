@@ -3,14 +3,8 @@ use crate::model::{Row, RowPage, RowQuery};
 /// In-memory filter + paginate over a slice of rows.
 pub fn list_rows(rows: &[Row], query: &RowQuery) -> RowPage {
     let folder_filter = query.folder.as_deref().filter(|s| !s.is_empty());
-    let text_filter = query
-        .text
-        .as_deref()
-        .map(str::to_ascii_lowercase);
-    let hash_filter = query
-        .hash
-        .as_deref()
-        .map(str::to_ascii_uppercase);
+    let text_filter = query.text.as_deref().map(str::to_ascii_lowercase);
+    let hash_filter = query.hash.as_deref().map(str::to_ascii_uppercase);
     let cats = query.categories.as_deref();
     let sources = query.sources.as_deref();
 
@@ -102,10 +96,38 @@ mod tests {
 
     fn sample() -> Vec<Row> {
         vec![
-            r("C:\\a\\one.txt", Category::Duplicate, Source::Base, 1, 10, "ABCDEF12"),
-            r("C:\\a\\b\\two.txt", Category::Moved, Source::Base, 2, 20, "11223344"),
-            r("C:\\a\\b\\three.txt", Category::Unique, Source::Base, 3, 30, "55667788"),
-            r("D:\\x\\foo.txt", Category::Duplicate, Source::Second, 1, 10, "ABCDEF12"),
+            r(
+                "C:\\a\\one.txt",
+                Category::Duplicate,
+                Source::Base,
+                1,
+                10,
+                "ABCDEF12",
+            ),
+            r(
+                "C:\\a\\b\\two.txt",
+                Category::Moved,
+                Source::Base,
+                2,
+                20,
+                "11223344",
+            ),
+            r(
+                "C:\\a\\b\\three.txt",
+                Category::Unique,
+                Source::Base,
+                3,
+                30,
+                "55667788",
+            ),
+            r(
+                "D:\\x\\foo.txt",
+                Category::Duplicate,
+                Source::Second,
+                1,
+                10,
+                "ABCDEF12",
+            ),
         ]
     }
 
