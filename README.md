@@ -210,6 +210,13 @@ cd src-tauri && cargo fmt --all -- --check && cargo clippy --all-targets -- -D w
 - **Identical-status badges in the folder tree** — each tree node carries
   a green / yellow / no-badge indicator (full subtree match / partial
   descendant match / none), with a tooltip describing what was matched.
+- **Green-on-top toggle** — when an Identical-folders scan has run, a
+  checkbox at the top of the folder tree re-orders siblings at every
+  level so fully-duplicated (green) folders sort first, then yellow, then
+  red. Off restores alphabetical order. Disabled until a scan has run.
+- **Virtual-scrolled row table** — the right-hand table renders only the
+  visible window of rows (fixed 22 px row height, overscan buffer). Large
+  reports scroll smoothly with no row cap.
 - **Tauri commands**: `open_report`, `list_report_rows`,
   `find_identical_folders_cmd`, `close_report`. Errors returned as tagged
   serde enums.
@@ -223,10 +230,6 @@ cd src-tauri && cargo fmt --all -- --check && cargo clippy --all-targets -- -D w
 These are explicitly out of scope for v1 and are tracked for the next
 sprint.
 
-- **Angular Material + CDK Virtual Scroll** — AGENTS calls these mandatory.
-  The current table is a plain HTML `<table>` capped at 5 000 rendered
-  rows. Large reports (≥ 200 k rows) need virtual scroll before they're
-  comfortable.
 - **Push filtering to Rust for large reports** — AGENTS §4.4 calls for a
   > 50 k-row threshold beyond which filters run on the backend with paged
   > fetches. Today all filtering is in-memory on the JS side.
