@@ -77,6 +77,10 @@ It is produced by both modes of `MyDupFinderFindDupsJobDTO.EFindDupsMode`:
 - `FindDupsTheWholeLot` — every file, classified into one of:
   `Duplicate`, `Moved`, `Unique`, `Missing`, `New`, `Changed`.
 
+There are 2 real reports for writing tests against:
+- `testdata/Demo DiffFindOnlyDups dupReport.csv` for `FindOnlyDups`
+- `testdata/Demo DiffFindDupsTheWholeLot dupReport.csv` for `FindDupsTheWholeLot`
+
 ### 3.1 Header line (exact, byte-for-byte)
 
 ```
