@@ -217,11 +217,22 @@ cd src-tauri && cargo fmt --all -- --check && cargo clippy --all-targets -- -D w
 - **Virtual-scrolled row table** — the right-hand table renders only the
   visible window of rows (fixed 22 px row height, overscan buffer). Large
   reports scroll smoothly with no row cap.
+- **Streaming CSV parse (Rust)** — single forward pass over the input via
+  `BufReader` + `csv::Reader::read_record`. The file is never held as a
+  single `String`; the header line is peeked through the buffered reader
+  rather than re-seeking. The parser invokes a progress callback every
+  5 000 rows, which the `open_report` Tauri command relays to the frontend
+  as `report-progress` events (`{phase, rowsRead, bytesRead, totalBytes}`).
+  The `ReportBackend` interface exposes the stream through an optional
+  `openReport(path, { onProgress })` hook so the UI can render a
+  determinate progress bar; the `MockReportBackend` emits the same shape
+  so `ng serve` consumers can develop against it.
 - **Tauri commands**: `open_report`, `list_report_rows`,
   `find_identical_folders_cmd`, `close_report`. Errors returned as tagged
   serde enums.
-- **Tests**: 18 `cargo test` cases (parser, identical-folders, query,
-  state) and 13 Vitest cases (tree builder, row filter).
+- **Tests**: 22 `cargo test` cases (parser including streaming-progress
+  coverage, identical-folders, query, state) and 25 Vitest cases (tree
+  builder, row filter).
 
 ---
 
@@ -238,11 +249,10 @@ sprint.
   spec wants them visually grouped and collapsible.
 - **Persistence** — last-opened report path and UI prefs (column toggles,
   filters) are not saved between sessions. AGENTS sprint backlog item 8.
-- **Async progress events** — backend commands run synchronously. AGENTS
-  §5 asks long-running ops to emit `report-progress` events.
-- **Streaming CSV parse** — the parser reads the whole CSV into a
-  `Vec<Row>` before returning. AGENTS asks for streaming. Fine for the
-  current report sizes; revisit when scaling.
+- **Async progress events for non-parse commands** — `open_report` now
+  emits `report-progress` from the streaming parser, but the
+  identical-folder scan still runs synchronously. AGENTS §5 asks the
+  long-running scan to emit progress too.
 - **Identical-folder algorithm — renamed (Moved) subfolders** — the
   current bottom-up check requires matching subfolder names. Folders
   whose names changed but whose contents are entirely `Moved` won't be

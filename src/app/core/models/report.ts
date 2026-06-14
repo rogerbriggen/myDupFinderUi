@@ -50,3 +50,16 @@ export interface IdenticalFolderPair {
   fileCount: number;
   totalSize: number;
 }
+
+/**
+ * Progress event emitted by the Rust streaming parser during `openReport`.
+ * `phase: "parsing"` arrives periodically while rows are being read;
+ * `phase: "done"` arrives once when the parse finishes (just before the
+ * `openReport` promise resolves).
+ */
+export interface ReportProgressEvent {
+  phase: 'parsing' | 'done';
+  rowsRead: number;
+  bytesRead: number;
+  totalBytes: number | null;
+}

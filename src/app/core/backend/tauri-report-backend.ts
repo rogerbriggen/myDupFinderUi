@@ -1,14 +1,32 @@
 import { Injectable } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 
-import { IdenticalFolderPair, ReportHandle, RowPage, RowQuery } from '../models/report';
-import { ReportBackend } from './report-backend';
+import {
+  IdenticalFolderPair,
+  ReportHandle,
+  ReportProgressEvent,
+  RowPage,
+  RowQuery,
+} from '../models/report';
+import { OpenReportOptions, ReportBackend } from './report-backend';
+
+const REPORT_PROGRESS_EVENT = 'report-progress';
 
 @Injectable({ providedIn: 'root' })
 export class TauriReportBackend implements ReportBackend {
-  openReport(path: string): Promise<ReportHandle> {
-    return invoke<ReportHandle>('open_report', { path });
+  async openReport(path: string, options?: OpenReportOptions): Promise<ReportHandle> {
+    let unlisten: UnlistenFn | undefined;
+    if (options?.onProgress) {
+      const cb = options.onProgress;
+      unlisten = await listen<ReportProgressEvent>(REPORT_PROGRESS_EVENT, (e) => cb(e.payload));
+    }
+    try {
+      return await invoke<ReportHandle>('open_report', { path });
+    } finally {
+      unlisten?.();
+    }
   }
 
   listRows(handle: ReportHandle, query: RowQuery): Promise<RowPage> {
