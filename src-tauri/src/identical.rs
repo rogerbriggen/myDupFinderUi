@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use crate::model::{Category, IdenticalFolderPair, Row, Source, parent_of, split_folder_and_name};
+use crate::model::{parent_of, split_folder_and_name, Category, IdenticalFolderPair, Row, Source};
 
 /// Detect pairs of folders (one rooted in Base, one rooted in Second) whose
 /// entire subtree is composed of files paired across the two sides via
@@ -31,7 +31,9 @@ pub fn find_identical_folders(rows: &[Row]) -> Vec<IdenticalFolderPair> {
 
     let candidate_bases: Vec<String> = tree_base.keys().cloned().collect();
     for base_folder in &candidate_bases {
-        if let Some(second_folder) = candidate_second_folder(base_folder, &tree_base, &pair_for_base) {
+        if let Some(second_folder) =
+            candidate_second_folder(base_folder, &tree_base, &pair_for_base)
+        {
             if is_identical(
                 base_folder,
                 &second_folder,
@@ -62,7 +64,7 @@ pub fn find_identical_folders(rows: &[Row]) -> Vec<IdenticalFolderPair> {
         .collect();
     pairs.retain(|p| !has_ancestor_pair(&p.folder_a, &p.folder_b, &pair_set));
 
-    pairs.sort_by(|a, b| b.total_size.cmp(&a.total_size));
+    pairs.sort_by_key(|p| std::cmp::Reverse(p.total_size));
     pairs
 }
 
@@ -366,10 +368,38 @@ mod tests {
     #[test]
     fn detects_simple_identical_pair() {
         let rows = vec![
-            r("C:\\a\\b\\one.txt", "H1", Category::Duplicate, Source::Base, 1, 100),
-            r("D:\\x\\y\\one.txt", "H1", Category::Duplicate, Source::Second, 1, 100),
-            r("C:\\a\\b\\two.txt", "H2", Category::Duplicate, Source::Base, 2, 200),
-            r("D:\\x\\y\\two.txt", "H2", Category::Duplicate, Source::Second, 2, 200),
+            r(
+                "C:\\a\\b\\one.txt",
+                "H1",
+                Category::Duplicate,
+                Source::Base,
+                1,
+                100,
+            ),
+            r(
+                "D:\\x\\y\\one.txt",
+                "H1",
+                Category::Duplicate,
+                Source::Second,
+                1,
+                100,
+            ),
+            r(
+                "C:\\a\\b\\two.txt",
+                "H2",
+                Category::Duplicate,
+                Source::Base,
+                2,
+                200,
+            ),
+            r(
+                "D:\\x\\y\\two.txt",
+                "H2",
+                Category::Duplicate,
+                Source::Second,
+                2,
+                200,
+            ),
         ];
         let pairs = find_identical_folders(&rows);
         assert_eq!(pairs.len(), 1);
@@ -382,9 +412,30 @@ mod tests {
     #[test]
     fn rejects_when_missing_in_subtree() {
         let rows = vec![
-            r("C:\\a\\b\\one.txt", "H1", Category::Duplicate, Source::Base, 1, 100),
-            r("D:\\x\\y\\one.txt", "H1", Category::Duplicate, Source::Second, 1, 100),
-            r("C:\\a\\b\\miss.txt", "H2", Category::Missing, Source::Base, 2, 200),
+            r(
+                "C:\\a\\b\\one.txt",
+                "H1",
+                Category::Duplicate,
+                Source::Base,
+                1,
+                100,
+            ),
+            r(
+                "D:\\x\\y\\one.txt",
+                "H1",
+                Category::Duplicate,
+                Source::Second,
+                1,
+                100,
+            ),
+            r(
+                "C:\\a\\b\\miss.txt",
+                "H2",
+                Category::Missing,
+                Source::Base,
+                2,
+                200,
+            ),
         ];
         let pairs = find_identical_folders(&rows);
         assert!(pairs.is_empty());
@@ -393,13 +444,44 @@ mod tests {
     #[test]
     fn picks_maximal_pair_over_subfolder() {
         let rows = vec![
-            r("C:\\a\\b\\sub\\one.txt", "H1", Category::Duplicate, Source::Base, 1, 100),
-            r("D:\\x\\y\\sub\\one.txt", "H1", Category::Duplicate, Source::Second, 1, 100),
-            r("C:\\a\\b\\two.txt", "H2", Category::Duplicate, Source::Base, 2, 200),
-            r("D:\\x\\y\\two.txt", "H2", Category::Duplicate, Source::Second, 2, 200),
+            r(
+                "C:\\a\\b\\sub\\one.txt",
+                "H1",
+                Category::Duplicate,
+                Source::Base,
+                1,
+                100,
+            ),
+            r(
+                "D:\\x\\y\\sub\\one.txt",
+                "H1",
+                Category::Duplicate,
+                Source::Second,
+                1,
+                100,
+            ),
+            r(
+                "C:\\a\\b\\two.txt",
+                "H2",
+                Category::Duplicate,
+                Source::Base,
+                2,
+                200,
+            ),
+            r(
+                "D:\\x\\y\\two.txt",
+                "H2",
+                Category::Duplicate,
+                Source::Second,
+                2,
+                200,
+            ),
         ];
         let pairs = find_identical_folders(&rows);
-        let roots: Vec<_> = pairs.iter().map(|p| (p.folder_a.as_str(), p.folder_b.as_str())).collect();
+        let roots: Vec<_> = pairs
+            .iter()
+            .map(|p| (p.folder_a.as_str(), p.folder_b.as_str()))
+            .collect();
         assert!(roots.contains(&("C:\\a\\b", "D:\\x\\y")));
         assert!(!roots.contains(&("C:\\a\\b\\sub", "D:\\x\\y\\sub")));
     }
