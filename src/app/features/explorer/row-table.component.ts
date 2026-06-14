@@ -24,7 +24,10 @@ interface DisplayRow {
   imports: [CommonModule],
   template: `
     <div class="meta">
-      Showing {{ rows().length }} row@if (rows().length !== 1) {<span>s</span>}
+      Showing {{ rows().length }} row
+      @if (rows().length !== 1) {
+        <span>s</span>
+      }
       @if (store.selectedFolder(); as f) {
         <span>
           — folder: <code>{{ f || '(root)' }}</code>

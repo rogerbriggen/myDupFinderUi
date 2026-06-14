@@ -9,7 +9,9 @@
     "tauri": "tauri",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "private": true,
   "dependencies": {
@@ -34,6 +36,8 @@
     "@tauri-apps/cli": "^2",
     "angular-eslint": "22.0.0",
     "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.4",
     "typescript": "~6.0.3",
     "typescript-eslint": "8.60.1",
     "vitest": "^4.1.8"

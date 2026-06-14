@@ -14,8 +14,7 @@ import { ReportStore } from './report-store';
         <div class="empty">Scanning…</div>
       } @else {
         <div class="empty">
-          No identical folder pairs (or scan not started — click
-          “Identical folders”).
+          No identical folder pairs (or scan not started — click “Identical folders”).
         </div>
       }
     } @else {
@@ -32,12 +31,7 @@ import { ReportStore } from './report-store';
           @for (p of pairs(); track p.folderA + '→' + p.folderB) {
             <tr>
               <td>
-                <button
-                  type="button"
-                  class="link"
-                  (click)="select(p.folderA)"
-                  [title]="p.folderA"
-                >
+                <button type="button" class="link" (click)="select(p.folderA)" [title]="p.folderA">
                   {{ p.folderA }}
                 </button>
               </td>

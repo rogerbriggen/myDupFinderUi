@@ -1,10 +1,4 @@
-export type Category =
-  | 'Duplicate'
-  | 'Moved'
-  | 'Unique'
-  | 'Missing'
-  | 'New'
-  | 'Changed';
+export type Category = 'Duplicate' | 'Moved' | 'Unique' | 'Missing' | 'New' | 'Changed';
 
 export const ALL_CATEGORIES: readonly Category[] = [
   'Duplicate',

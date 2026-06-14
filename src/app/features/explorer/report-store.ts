@@ -111,9 +111,7 @@ export class ReportStore {
     const current = new Set(this.categoryFilter());
     if (on) current.add(category);
     else current.delete(category);
-    this.categoryFilter.set(
-      ALL_CATEGORIES.filter((c) => current.has(c)),
-    );
+    this.categoryFilter.set(ALL_CATEGORIES.filter((c) => current.has(c)));
     this.refreshFilter();
   }
 
@@ -121,9 +119,7 @@ export class ReportStore {
     const current = new Set(this.sourceFilter());
     if (on) current.add(source);
     else current.delete(source);
-    this.sourceFilter.set(
-      (['Base', 'Second'] as const).filter((s) => current.has(s)),
-    );
+    this.sourceFilter.set((['Base', 'Second'] as const).filter((s) => current.has(s)));
     this.refreshFilter();
   }
 

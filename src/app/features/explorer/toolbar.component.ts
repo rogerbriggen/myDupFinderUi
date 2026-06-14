@@ -12,7 +12,11 @@ import { ReportStore } from './report-store';
   template: `
     <div class="bar">
       <button type="button" (click)="open()" [disabled]="store.loading()">
-        @if (store.loading()) { Loading… } @else { Open report… }
+        @if (store.loading()) {
+          Loading…
+        } @else {
+          Open report…
+        }
       </button>
 
       @if (store.handle(); as h) {
@@ -91,7 +95,11 @@ import { ReportStore } from './report-store';
         (click)="store.loadIdenticalFolders()"
         [disabled]="!store.handle() || store.identicalLoading()"
       >
-        @if (store.identicalLoading()) { Scanning… } @else { Identical folders }
+        @if (store.identicalLoading()) {
+          Scanning…
+        } @else {
+          Identical folders
+        }
       </button>
     </div>
 

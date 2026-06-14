@@ -131,12 +131,7 @@ export class FolderTreeComponent {
   }
 }
 
-function walk(
-  node: FolderNode,
-  depth: number,
-  expanded: Set<string>,
-  out: FlattenedNode[],
-): void {
+function walk(node: FolderNode, depth: number, expanded: Set<string>, out: FlattenedNode[]): void {
   const isLeaf = node.children.length === 0;
   const isExpanded = expanded.has(node.path);
   out.push({ node, depth, expanded: isExpanded, isLeaf });

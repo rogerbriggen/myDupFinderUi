@@ -37,13 +37,13 @@ backend produces (CSV report today; maybe SQLite DB or JSON later).
 
 ## 2. Tech stack
 
-| Layer    | Choice                  | Notes |
-|----------|-------------------------|-------|
-| Frontend | **Angular** (latest LTS, standalone components, signals) | Use Angular CLI and pnmp. |
-| Backend  | **Tauri 2.x** (Rust)    | Used only for file I/O, CSV parsing, and heavy aggregations. |
-| Styling  | Angular Material + CDK Virtual Scroll | Tree + huge tables; virtual scroll is mandatory. |
-| State    | Angular signals + a thin store service | Avoid NgRx unless complexity demands it. |
-| Tests    | Vitest(frontend), `cargo test` (Rust) | Karma is fine if scaffolded by CLI but not preferred. |
+| Layer    | Choice                                                   | Notes                                                        |
+| -------- | -------------------------------------------------------- | ------------------------------------------------------------ |
+| Frontend | **Angular** (latest LTS, standalone components, signals) | Use Angular CLI and pnmp.                                    |
+| Backend  | **Tauri 2.x** (Rust)                                     | Used only for file I/O, CSV parsing, and heavy aggregations. |
+| Styling  | Angular Material + CDK Virtual Scroll                    | Tree + huge tables; virtual scroll is mandatory.             |
+| State    | Angular signals + a thin store service                   | Avoid NgRx unless complexity demands it.                     |
+| Tests    | Vitest(frontend), `cargo test` (Rust)                    | Karma is fine if scaffolded by CLI but not preferred.        |
 
 ### Backend abstraction — IMPORTANT
 
@@ -96,14 +96,14 @@ FilenameAndPath;FileSize;FileSha512Hash;Category;Source;GroupId
 
 ### 3.2 Columns
 
-| # | Column            | Type    | Notes |
-|---|-------------------|---------|-------|
-| 1 | `FilenameAndPath` | string  | Full path, e.g. `C:\photos\2024\img.jpg`. Always quoted. |
-| 2 | `FileSize`        | int64   | Bytes. |
-| 3 | `FileSha512Hash`  | hex     | Lowercase SHA-512 hex. May be empty for `New` rows that were not hashed. |
-| 4 | `Category`        | enum    | One of: `Duplicate`, `Moved`, `Unique`, `Missing`, `New`, `Changed`. |
-| 5 | `Source`          | enum    | `Base` or `Second`. Which DB the row came from. Single-DB jobs use `Base` for all rows. |
-| 6 | `GroupId`         | int32   | Monotonically increasing. Rows describing the same logical file (both sides of a Duplicate / Changed / Moved pair, or every copy in a same-DB duplicate group) share one GroupId. `Missing`, `New`, `Unique` each get their own unique GroupId. |
+| #   | Column            | Type   | Notes                                                                                                                                                                                                                                           |
+| --- | ----------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `FilenameAndPath` | string | Full path, e.g. `C:\photos\2024\img.jpg`. Always quoted.                                                                                                                                                                                        |
+| 2   | `FileSize`        | int64  | Bytes.                                                                                                                                                                                                                                          |
+| 3   | `FileSha512Hash`  | hex    | Lowercase SHA-512 hex. May be empty for `New` rows that were not hashed.                                                                                                                                                                        |
+| 4   | `Category`        | enum   | One of: `Duplicate`, `Moved`, `Unique`, `Missing`, `New`, `Changed`.                                                                                                                                                                            |
+| 5   | `Source`          | enum   | `Base` or `Second`. Which DB the row came from. Single-DB jobs use `Base` for all rows.                                                                                                                                                         |
+| 6   | `GroupId`         | int32  | Monotonically increasing. Rows describing the same logical file (both sides of a Duplicate / Changed / Moved pair, or every copy in a same-DB duplicate group) share one GroupId. `Missing`, `New`, `Unique` each get their own unique GroupId. |
 
 ### 3.3 Sort order in the file
 
@@ -145,7 +145,7 @@ Design `ReportBackend` so additional columns are a non-breaking addition
 (prefer an extensible `Row` shape with optional fields over a fixed
 positional tuple).
 
-### 3.6 Sibling format: the *check* report
+### 3.6 Sibling format: the _check_ report
 
 `myDupFinder check` produces a different CSV (RFC 4180, comma-separated,
 with `# Key=Value` header comments and columns
