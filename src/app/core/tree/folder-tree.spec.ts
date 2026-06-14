@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
 
-import { Row } from '../models/report';
-import { buildFolderTree, findNode, splitFolderAndName } from './folder-tree';
+import { IdenticalFolderPair, Row } from '../models/report';
+import {
+  buildFolderTree,
+  computeIdenticalStatuses,
+  findNode,
+  splitFolderAndName,
+} from './folder-tree';
 
 function r(
   path: string,
@@ -74,5 +79,86 @@ describe('buildFolderTree', () => {
     const tree = buildFolderTree(rows);
     expect(tree.directFileCount).toBe(1);
     expect(tree.totalFileCount).toBe(1);
+  });
+});
+
+describe('computeIdenticalStatuses', () => {
+  function pair(folderA: string, folderB: string): IdenticalFolderPair {
+    return { folderA, folderB, fileCount: 1, totalSize: 1 };
+  }
+
+  it('returns an empty map when no pairs are provided', () => {
+    const tree = buildFolderTree([r('C:\\a\\one.txt', 1, 'Unique')]);
+    expect(computeIdenticalStatuses(tree, []).size).toBe(0);
+  });
+
+  it('marks an identical folder and its whole subtree green', () => {
+    const rows: Row[] = [
+      r('C:\\a\\b\\one.txt', 1, 'Duplicate'),
+      r('C:\\a\\b\\sub\\two.txt', 1, 'Duplicate'),
+    ];
+    const tree = buildFolderTree(rows);
+    const m = computeIdenticalStatuses(tree, [pair('C:\\a\\b', 'D:\\copy')]);
+    expect(m.get('C:\\a\\b')).toBe('green');
+    expect(m.get('C:\\a\\b\\sub')).toBe('green');
+  });
+
+  it('marks a parent yellow when only some descendants are green', () => {
+    const rows: Row[] = [
+      r('C:\\a\\b\\one.txt', 1, 'Duplicate'),
+      r('C:\\a\\c\\two.txt', 1, 'Unique'),
+    ];
+    const tree = buildFolderTree(rows);
+    const m = computeIdenticalStatuses(tree, [pair('C:\\a\\b', 'D:\\copy')]);
+    expect(m.get('C:\\a\\b')).toBe('green');
+    expect(m.get('C:\\a\\c')).toBe('red');
+    expect(m.get('C:\\a')).toBe('yellow');
+  });
+
+  it('marks a parent green when every child is green', () => {
+    const rows: Row[] = [
+      r('C:\\a\\b\\one.txt', 1, 'Duplicate'),
+      r('C:\\a\\c\\two.txt', 1, 'Duplicate'),
+    ];
+    const tree = buildFolderTree(rows);
+    const m = computeIdenticalStatuses(tree, [
+      pair('C:\\a\\b', 'D:\\x'),
+      pair('C:\\a\\c', 'D:\\y'),
+    ]);
+    expect(m.get('C:\\a')).toBe('green');
+  });
+
+  it('downgrades a parent to yellow when it holds loose files alongside green children', () => {
+    // C:\a\b is in an identical pair, but C:\a also has a loose file that has
+    // no identical match of its own — so C:\a is not fully duplicated.
+    const rows: Row[] = [
+      r('C:\\a\\loose.txt', 1, 'Unique'),
+      r('C:\\a\\b\\one.txt', 1, 'Duplicate'),
+    ];
+    const tree = buildFolderTree(rows);
+    const m = computeIdenticalStatuses(tree, [pair('C:\\a\\b', 'D:\\copy')]);
+    expect(m.get('C:\\a\\b')).toBe('green');
+    expect(m.get('C:\\a')).toBe('yellow');
+  });
+
+  it('keeps a paired folder green even when it holds direct files', () => {
+    // C:\a is the paired folder itself, so its direct files are part of the
+    // match by definition — no downgrade.
+    const rows: Row[] = [
+      r('C:\\a\\one.txt', 1, 'Duplicate'),
+      r('C:\\a\\b\\two.txt', 1, 'Duplicate'),
+    ];
+    const tree = buildFolderTree(rows);
+    const m = computeIdenticalStatuses(tree, [pair('C:\\a', 'D:\\copy')]);
+    expect(m.get('C:\\a')).toBe('green');
+    expect(m.get('C:\\a\\b')).toBe('green');
+  });
+
+  it('marks a folder red when no descendant has an identical match', () => {
+    const rows: Row[] = [r('C:\\a\\b\\one.txt', 1, 'Unique')];
+    const tree = buildFolderTree(rows);
+    const m = computeIdenticalStatuses(tree, [pair('Z:\\other', 'Z:\\other2')]);
+    expect(m.get('C:\\a')).toBe('red');
+    expect(m.get('C:\\a\\b')).toBe('red');
   });
 });

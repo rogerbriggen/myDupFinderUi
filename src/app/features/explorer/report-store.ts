@@ -10,7 +10,12 @@ import {
   RowQuery,
   Source,
 } from '../../core/models/report';
-import { FolderNode, buildFolderTree } from '../../core/tree/folder-tree';
+import {
+  FolderNode,
+  IdenticalStatus,
+  buildFolderTree,
+  computeIdenticalStatuses,
+} from '../../core/tree/folder-tree';
 
 /**
  * Owns the currently open report and the user's view state (selected folder,
@@ -41,6 +46,18 @@ export class ReportStore {
 
   readonly identicalFolders = signal<IdenticalFolderPair[]>([]);
   readonly identicalLoading = signal(false);
+
+  /**
+   * `path -> green|yellow|red` for every folder in the current tree. Empty
+   * until the user runs an Identical-folders scan; the tree uses that as a
+   * "no color" signal.
+   */
+  readonly identicalStatuses = computed<Map<string, IdenticalStatus>>(() => {
+    const root = this.tree();
+    const pairs = this.identicalFolders();
+    if (!root || pairs.length === 0) return new Map();
+    return computeIdenticalStatuses(root, pairs);
+  });
 
   /** Materialised filtered rows for the current selection + filters. */
   readonly filteredRows = signal<Row[]>([]);
