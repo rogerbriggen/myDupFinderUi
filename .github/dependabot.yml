@@ -24,10 +24,6 @@ updates:
           - '@angular-devkit/*'
           - 'angular-eslint'
           - 'ng-packagr'
-  - package-ecosystem: 'rust-toolchain' # See documentation for possible values
-    directory: '/src-tauri' # Location of package manifests
-    schedule:
-      interval: 'weekly'
   - package-ecosystem: 'cargo' # See documentation for possible values
     directory: '/src-tauri' # Location of package manifests
     schedule:
