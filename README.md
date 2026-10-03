@@ -210,11 +210,29 @@ cd src-tauri && cargo fmt --all -- --check && cargo clippy --all-targets -- -D w
 - **Identical-status badges in the folder tree** — each tree node carries
   a green / yellow / no-badge indicator (full subtree match / partial
   descendant match / none), with a tooltip describing what was matched.
+- **Green-on-top toggle** — when an Identical-folders scan has run, a
+  checkbox at the top of the folder tree re-orders siblings at every
+  level so fully-duplicated (green) folders sort first, then yellow, then
+  red. Off restores alphabetical order. Disabled until a scan has run.
+- **Virtual-scrolled row table** — the right-hand table renders only the
+  visible window of rows (fixed 22 px row height, overscan buffer). Large
+  reports scroll smoothly with no row cap.
+- **Streaming CSV parse (Rust)** — single forward pass over the input via
+  `BufReader` + `csv::Reader::read_record`. The file is never held as a
+  single `String`; the header line is peeked through the buffered reader
+  rather than re-seeking. The parser invokes a progress callback every
+  5 000 rows, which the `open_report` Tauri command relays to the frontend
+  as `report-progress` events (`{phase, rowsRead, bytesRead, totalBytes}`).
+  The `ReportBackend` interface exposes the stream through an optional
+  `openReport(path, { onProgress })` hook so the UI can render a
+  determinate progress bar; the `MockReportBackend` emits the same shape
+  so `ng serve` consumers can develop against it.
 - **Tauri commands**: `open_report`, `list_report_rows`,
   `find_identical_folders_cmd`, `close_report`. Errors returned as tagged
   serde enums.
-- **Tests**: 18 `cargo test` cases (parser, identical-folders, query,
-  state) and 13 Vitest cases (tree builder, row filter).
+- **Tests**: 22 `cargo test` cases (parser including streaming-progress
+  coverage, identical-folders, query, state) and 25 Vitest cases (tree
+  builder, row filter).
 
 ---
 
@@ -223,10 +241,6 @@ cd src-tauri && cargo fmt --all -- --check && cargo clippy --all-targets -- -D w
 These are explicitly out of scope for v1 and are tracked for the next
 sprint.
 
-- **Angular Material + CDK Virtual Scroll** — AGENTS calls these mandatory.
-  The current table is a plain HTML `<table>` capped at 5 000 rendered
-  rows. Large reports (≥ 200 k rows) need virtual scroll before they're
-  comfortable.
 - **Push filtering to Rust for large reports** — AGENTS §4.4 calls for a
   > 50 k-row threshold beyond which filters run on the backend with paged
   > fetches. Today all filtering is in-memory on the JS side.
@@ -235,11 +249,10 @@ sprint.
   spec wants them visually grouped and collapsible.
 - **Persistence** — last-opened report path and UI prefs (column toggles,
   filters) are not saved between sessions. AGENTS sprint backlog item 8.
-- **Async progress events** — backend commands run synchronously. AGENTS
-  §5 asks long-running ops to emit `report-progress` events.
-- **Streaming CSV parse** — the parser reads the whole CSV into a
-  `Vec<Row>` before returning. AGENTS asks for streaming. Fine for the
-  current report sizes; revisit when scaling.
+- **Async progress events for non-parse commands** — `open_report` now
+  emits `report-progress` from the streaming parser, but the
+  identical-folder scan still runs synchronously. AGENTS §5 asks the
+  long-running scan to emit progress too.
 - **Identical-folder algorithm — renamed (Moved) subfolders** — the
   current bottom-up check requires matching subfolder names. Folders
   whose names changed but whose contents are entirely `Moved` won't be

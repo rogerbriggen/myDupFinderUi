@@ -16,6 +16,23 @@ interface FlattenedNode {
   standalone: true,
   imports: [CommonModule],
   template: `
+    <div class="tree-header">
+      <label class="toggle-label" [class.disabled]="!hasStatuses()">
+        <input
+          type="checkbox"
+          [checked]="greenOnTop()"
+          [disabled]="!hasStatuses()"
+          (change)="toggleGreenOnTop($event)"
+        />
+        <span
+          class="dot status-green"
+          [attr.title]="
+            hasStatuses() ? 'Show green (fully duplicated) folders at top of each level' : ''
+          "
+        ></span>
+        green on top
+      </label>
+    </div>
     @if (!tree()) {
       <div class="empty">No report open.</div>
     } @else {
@@ -60,14 +77,43 @@ interface FlattenedNode {
   styles: [
     `
       :host {
-        display: block;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
         font-size: 13px;
       }
+      .tree-header {
+        flex: 0 0 auto;
+        padding: 4px 8px;
+        border-bottom: 1px solid #eee;
+        background: #fafafa;
+        font-size: 12px;
+        color: #444;
+      }
+      .toggle-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+      }
+      .toggle-label.disabled {
+        color: #999;
+        cursor: not-allowed;
+      }
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #999;
+      }
       .tree {
+        flex: 1;
         margin: 0;
         padding: 0;
         list-style: none;
+        overflow-y: auto;
+        min-height: 0;
       }
       .row {
         display: flex;
@@ -135,6 +181,9 @@ export class FolderTreeComponent {
   readonly selected = this.store.selectedFolder;
   readonly statuses = this.store.identicalStatuses;
   readonly expanded = signal<Set<string>>(new Set<string>(['']));
+  readonly greenOnTop = signal<boolean>(true);
+
+  readonly hasStatuses = computed(() => this.statuses().size > 0);
 
   statusOf(path: string): IdenticalStatus | undefined {
     return this.statuses().get(path);
@@ -150,8 +199,10 @@ export class FolderTreeComponent {
     const root = this.tree();
     if (!root) return [];
     const expanded = this.expanded();
+    const statuses = this.statuses();
+    const sortByStatus = this.greenOnTop() && statuses.size > 0;
     const out: FlattenedNode[] = [];
-    walk(root, 0, expanded, out);
+    walk(root, 0, expanded, statuses, sortByStatus, out);
     return out;
   });
 
@@ -166,15 +217,54 @@ export class FolderTreeComponent {
     else next.add(path);
     this.expanded.set(next);
   }
+
+  toggleGreenOnTop(event: Event): void {
+    this.greenOnTop.set((event.target as HTMLInputElement).checked);
+  }
 }
 
-function walk(node: FolderNode, depth: number, expanded: Set<string>, out: FlattenedNode[]): void {
+const STATUS_RANK: Record<IdenticalStatus, number> = {
+  green: 0,
+  yellow: 1,
+  red: 2,
+};
+
+function statusRank(s: IdenticalStatus | undefined): number {
+  // Unknown / unscanned siblings sort after red so colored ones come first.
+  return s === undefined ? 3 : STATUS_RANK[s];
+}
+
+function orderChildren(
+  children: readonly FolderNode[],
+  statuses: Map<string, IdenticalStatus>,
+  sortByStatus: boolean,
+): readonly FolderNode[] {
+  if (!sortByStatus) return children;
+  // Stable sort: rank first, original (already-alphabetical) order as tiebreaker.
+  const indexed = children.map((node, index) => ({
+    node,
+    index,
+    rank: statusRank(statuses.get(node.path)),
+  }));
+  indexed.sort((a, b) => a.rank - b.rank || a.index - b.index);
+  return indexed.map((x) => x.node);
+}
+
+function walk(
+  node: FolderNode,
+  depth: number,
+  expanded: Set<string>,
+  statuses: Map<string, IdenticalStatus>,
+  sortByStatus: boolean,
+  out: FlattenedNode[],
+): void {
   const isLeaf = node.children.length === 0;
   const isExpanded = expanded.has(node.path);
   out.push({ node, depth, expanded: isExpanded, isLeaf });
   if (isExpanded) {
-    for (const child of node.children) {
-      walk(child, depth + 1, expanded, out);
+    const ordered = orderChildren(node.children, statuses, sortByStatus);
+    for (const child of ordered) {
+      walk(child, depth + 1, expanded, statuses, sortByStatus, out);
     }
   }
 }
