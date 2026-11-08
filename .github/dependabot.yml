@@ -4,11 +4,23 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
+
+# Tauri packages exist on both the JS (npm) and Rust (cargo) side and must stay
+# in sync (e.g. @tauri-apps/plugin-dialog <-> tauri-plugin-dialog). A
+# multi-ecosystem group puts them into one single PR.
+multi-ecosystem-groups:
+  tauri:
+    schedule:
+      interval: 'weekly'
+
 updates:
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'weekly'
+    multi-ecosystem-group: 'tauri'
+    patterns:
+      - '@tauri-apps/*'
     groups:
       angular:
         applies-to: version-updates
@@ -28,6 +40,10 @@ updates:
     directory: '/src-tauri' # Location of package manifests
     schedule:
       interval: 'weekly'
+    multi-ecosystem-group: 'tauri'
+    patterns:
+      - 'tauri'
+      - 'tauri-*'
   - package-ecosystem: 'github-actions'
     # Workflow files stored in the
     # default location of `.github/workflows`
